@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './expense_page.css';
 
 const ExpensePage = () => {
@@ -10,24 +10,28 @@ const ExpensePage = () => {
         amount: ''
     });
 
-    const [expenses, setExpenses] = useState([
-        {
-            "expenseCategory": "Food",
-            "expenseName": "Restaurant Bills",
-            "description": "Restaurant Bill of birthday Party",
-            "date": "2023-12-05",
-            "amount": 602.45
-        },
-        {
-            "expenseCategory": "Transport",
-            "expenseName": "Bus Bills",
-            "description": "Bus Bill of Home to Office",
-            "date": "2023-12-05",
-            "amount": 20
-        }
-    ]);
+    const [expenses, setExpenses] = useState([]);
+
+  const fetchData = () => {
+    try {
+      fetch("http://localhost:8080/expense-manager/get-all-expense", {
+        method: 'GET'
+      })
+        .then(response => response.json())
+        .then(result => setExpenses(result) )
+        .catch(error => console.log('error', error));
+    }
+    catch (error) {
+      console.log(error)
+    }
+  }
+
+useEffect(()=>{
+  fetchData();
+},[])
 
     const handleChange = (e) => {
+        console.log(e.target);
         const { name, value } = e.target;
         setNewExpense((prevExpense) => ({
             ...prevExpense,
@@ -38,6 +42,22 @@ const ExpensePage = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
+        console.log(newExpense)
+
+        try {
+          fetch("http://localhost:8080/expense-manager/create", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newExpense),
+          })
+            .then(response => response.text())
+            .then(result => fetchData())
+            .catch(error => console.error('Error:', error));
+    
+        } catch (error) {
+          console.log(error)
+        }
+       
         setNewExpense({
             expenseCategory: '',
             expenseName: '',
@@ -46,8 +66,7 @@ const ExpensePage = () => {
             amount: ''
         });
 
-        const updatedExpenses = [...expenses, newExpense];
-        setExpenses(updatedExpenses);
+       
     };
 
     return (
